@@ -24,6 +24,9 @@ func TestNextToken(t *testing.T) {
 	} else {
 		return false;
 	}
+
+	10 == 10
+	10 != 9
 `
 
 	expectedTokens := []token.Token{
@@ -90,6 +93,12 @@ func TestNextToken(t *testing.T) {
 		{token.FALSE, "false"},
 		{token.SEMICOLON, ";"},
 		{token.RBRACE, "}"},
+		{token.NUMBER, "10"},
+		{token.EQUAL, "=="},
+		{token.NUMBER, "10"},
+		{token.NUMBER, "10"},
+		{token.NOT_EQUAL, "!="},
+		{token.NUMBER, "9"},
 		{token.EOF, ""},
 	}
 

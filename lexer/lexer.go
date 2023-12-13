@@ -22,7 +22,14 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.char {
 	case '=':
-		searched = token.New(token.ASSIGN, string(l.char))
+		if l.peekChar() == '=' {
+			ch := l.char
+			l.readChar()
+			literal := string(ch) + string(l.char)
+			searched = token.New(token.EQUAL, literal)
+		} else {
+			searched = token.New(token.ASSIGN, string(l.char))
+		}
 	case ';':
 		searched = token.New(token.SEMICOLON, string(l.char))
 	case '(':
@@ -44,7 +51,14 @@ func (l *Lexer) NextToken() token.Token {
 	case '/':
 		searched = token.New(token.SLASH, string(l.char))
 	case '!':
-		searched = token.New(token.BANG, string(l.char))
+		if l.peekChar() == '=' {
+			ch := l.char
+			l.readChar()
+			literal := string(ch) + string(l.char)
+			searched = token.New(token.NOT_EQUAL, literal)
+		} else {
+			searched = token.New(token.BANG, string(l.char))
+		}
 	case '<':
 		searched = token.New(token.LESS, string(l.char))
 	case '>':
@@ -97,6 +111,13 @@ func (l *Lexer) skipWhitespace() {
 	for l.char == ' ' || l.char == '\t' || l.char == '\n' || l.char == '\r' {
 		l.readChar()
 	}
+}
+
+func (l *Lexer) peekChar() byte {
+	if l.peek >= len(l.input) {
+		l.char = 0
+	}
+	return l.input[l.peek]
 }
 
 func isLetter(c byte) bool {
