@@ -1,6 +1,6 @@
 package lexer
 
-import token "monkey/token"
+import "monkey/token"
 
 type Lexer struct {
 	input   string
@@ -22,43 +22,43 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.char {
 	case '=':
-		searched = token.Token{Type: token.ASSIGN, Literal: string(l.char)}
+		searched = token.New(token.ASSIGN, string(l.char))
 	case ';':
-		searched = token.Token{Type: token.SEMICOLON, Literal: string(l.char)}
+		searched = token.New(token.SEMICOLON, string(l.char))
 	case '(':
-		searched = token.Token{Type: token.LPAREN, Literal: string(l.char)}
+		searched = token.New(token.LPAREN, string(l.char))
 	case ')':
-		searched = token.Token{Type: token.RPAREN, Literal: string(l.char)}
+		searched = token.New(token.RPAREN, string(l.char))
 	case '{':
-		searched = token.Token{Type: token.LBRACE, Literal: string(l.char)}
+		searched = token.New(token.LBRACE, string(l.char))
 	case '}':
-		searched = token.Token{Type: token.RBRACE, Literal: string(l.char)}
+		searched = token.New(token.RBRACE, string(l.char))
 	case ',':
-		searched = token.Token{Type: token.COMMA, Literal: string(l.char)}
+		searched = token.New(token.COMMA, string(l.char))
 	case '+':
-		searched = token.Token{Type: token.PLUS, Literal: string(l.char)}
+		searched = token.New(token.PLUS, string(l.char))
 	case '-':
-		searched = token.Token{Type: token.MINUS, Literal: string(l.char)}
+		searched = token.New(token.MINUS, string(l.char))
 	case '*':
-		searched = token.Token{Type: token.ASTERISK, Literal: string(l.char)}
+		searched = token.New(token.ASTERISK, string(l.char))
 	case '/':
-		searched = token.Token{Type: token.SLASH, Literal: string(l.char)}
+		searched = token.New(token.SLASH, string(l.char))
 	case '!':
-		searched = token.Token{Type: token.BANG, Literal: string(l.char)}
+		searched = token.New(token.BANG, string(l.char))
 	case '<':
-		searched = token.Token{Type: token.LESS, Literal: string(l.char)}
+		searched = token.New(token.LESS, string(l.char))
 	case '>':
-		searched = token.Token{Type: token.GREATER, Literal: string(l.char)}
+		searched = token.New(token.GREATER, string(l.char))
 	case 0:
-		searched = token.Token{Type: token.EOF, Literal: ""}
+		searched = token.New(token.EOF, "")
 	default:
 		if isLetter(l.char) {
 			s := l.readString()
-			return token.Token{Type: token.FindStringType(s), Literal: s}
+			return token.New(token.FindStringType(s), s)
 		} else if isDigit(l.char) {
-			return token.Token{Type: token.NUMBER, Literal: l.readNumber()}
+			return token.New(token.NUMBER, l.readNumber())
 		} else {
-			searched = token.Token{Type: token.ILLEGAL, Literal: string(l.char)}
+			searched = token.New(token.ILLEGAL, string(l.char))
 		}
 	}
 
