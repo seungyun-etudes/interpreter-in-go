@@ -26,17 +26,17 @@ func TestLetStatements(t *testing.T) {
 		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
 	}
 
-	tests := []struct {
-		expectedIdentifier string
+	expected := []struct {
+		identifier string
 	}{
 		{"x"},
 		{"y"},
 		{"foobar"},
 	}
 
-	for i, tt := range tests {
+	for i, e := range expected {
 		statement := program.Statements[i]
-		if !testLetStatement(t, statement, tt.expectedIdentifier) {
+		if !testLetStatement(t, statement, e.identifier) {
 			return
 		}
 	}
@@ -65,6 +65,43 @@ func testLetStatement(t *testing.T, s ast.Statement, expected string) bool {
 	}
 
 	return true
+}
+
+func TestReturnStatements(t *testing.T) {
+	input := `
+	return 5;
+	return 10;
+	return 993322;
+	`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nil")
+	}
+
+	if len(program.Statements) != 3 {
+		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
+	}
+
+	for _, statement := range program.Statements {
+		testReturnStatement(t, statement)
+	}
+}
+
+func testReturnStatement(t *testing.T, statement ast.Statement) {
+	returnStatement, ok := statement.(*ast.ReturnStatement)
+
+	if !ok {
+		t.Errorf("statement expected : *ast.ReturnStatement. but was actual : %T", statement)
+	}
+
+	if returnStatement.TokenLiteral() != "return" {
+		t.Errorf("statement.TokenLiteral() expected : return, but was actual : %s", returnStatement.TokenLiteral())
+	}
 }
 
 func checkParserErrors(t *testing.T, p *Parser) {
