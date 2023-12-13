@@ -93,7 +93,7 @@ func (l *Lexer) readChar() {
 
 func (l *Lexer) readString() string {
 	start := l.current
-	for isLetter(l.char) {
+	for isLetter(l.char) || isDigit(l.char) {
 		l.readChar()
 	}
 	return l.input[start:l.current]
@@ -115,8 +115,9 @@ func (l *Lexer) skipWhitespace() {
 
 func (l *Lexer) peekChar() byte {
 	if l.peek >= len(l.input) {
-		l.char = 0
+		return 0
 	}
+
 	return l.input[l.peek]
 }
 
