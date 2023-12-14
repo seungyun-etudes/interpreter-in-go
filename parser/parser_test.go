@@ -22,9 +22,7 @@ func TestLetStatements(t *testing.T) {
 		t.Fatalf("ParseProgram() returned nil")
 	}
 
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
-	}
+	checkProgramLength(t, 3, program)
 
 	expected := []struct {
 		identifier string
@@ -83,9 +81,7 @@ func TestReturnStatements(t *testing.T) {
 		t.Fatalf("ParseProgram() returned nil")
 	}
 
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
-	}
+	checkProgramLength(t, 3, program)
 
 	for _, statement := range program.Statements {
 		testReturnStatement(t, statement)
@@ -104,6 +100,64 @@ func testReturnStatement(t *testing.T, statement ast.Statement) {
 	}
 }
 
+func TestIdentifierExpression(t *testing.T) {
+	input := "foobar"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	checkParserErrors(t, p)
+	checkProgramLength(t, 1, program)
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("statement expected : *ast.ExpressionStatement. but was actual : %T", program.Statements[0])
+	}
+
+	id, ok := statement.Expression.(*ast.Identifier)
+	if !ok {
+		t.Errorf("expression expected : *ast.Identifier. but was actual : %T", statement.Expression)
+	}
+
+	if id.Value != "foobar" {
+		t.Errorf("id.Value expected : %s, but was actual : %s", "foobar", id.Value)
+	}
+
+	if id.TokenLiteral() != "foobar" {
+		t.Errorf("id.TokenLiteral() expected : %s, but was actual : %s", "foobar", id.Value)
+	}
+}
+
+func TestNumberLiteralExpression(t *testing.T) {
+	input := "5"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	checkParserErrors(t, p)
+	checkProgramLength(t, 1, program)
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("statement expected : *ast.ExpressionStatement. but was actual : %T", program.Statements[0])
+	}
+
+	numberLiteral, ok := statement.Expression.(*ast.NumberLiteral)
+	if !ok {
+		t.Errorf("expression expected : *ast.NumberLiteral. but was actual : %T", statement.Expression)
+	}
+
+	if numberLiteral.Value != 5 {
+		t.Errorf("numberLiteral.Value expected : %d, but was actual : %d", 5, numberLiteral.Value)
+	}
+
+	if numberLiteral.TokenLiteral() != "5" {
+		t.Errorf("numberLiteral.TokenLiteral() expected : %s, but was actual : %s", "5", numberLiteral.TokenLiteral())
+	}
+}
+
 func checkParserErrors(t *testing.T, p *Parser) {
 	if len(p.Errors()) == 0 {
 		return
@@ -114,4 +168,10 @@ func checkParserErrors(t *testing.T, p *Parser) {
 		t.Errorf("parser error : %q", msg)
 	}
 	t.FailNow()
+}
+
+func checkProgramLength(t *testing.T, expected int, program *ast.Program) {
+	if len(program.Statements) != expected {
+		t.Fatalf("program.Statements does not contain %d statements. got=%d", expected, len(program.Statements))
+	}
 }

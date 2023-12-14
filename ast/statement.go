@@ -83,3 +83,16 @@ func (e *ExpressionStatement) String() string {
 	}
 	return ""
 }
+
+type NumberLiteral struct {
+	Token token.Token
+	Value int64
+}
+
+func (n *NumberLiteral) TokenLiteral() string {
+	return n.Token.Literal
+}
+func (n *NumberLiteral) String() string {
+	return n.Token.Literal
+}
+func (n *NumberLiteral) expressionNode() {}
