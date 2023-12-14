@@ -34,19 +34,6 @@ func (l *LetStatement) String() string {
 	return out.String()
 }
 
-type Identifier struct {
-	Token token.Token
-	Value string
-}
-
-func (i *Identifier) expressionNode() {}
-func (i *Identifier) TokenLiteral() string {
-	return i.Token.Literal
-}
-func (i *Identifier) String() string {
-	return i.Value
-}
-
 type ReturnStatement struct {
 	Token       token.Token
 	ReturnValue Expression
@@ -83,16 +70,3 @@ func (e *ExpressionStatement) String() string {
 	}
 	return ""
 }
-
-type NumberLiteral struct {
-	Token token.Token
-	Value int64
-}
-
-func (n *NumberLiteral) TokenLiteral() string {
-	return n.Token.Literal
-}
-func (n *NumberLiteral) String() string {
-	return n.Token.Literal
-}
-func (n *NumberLiteral) expressionNode() {}

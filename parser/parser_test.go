@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"monkey/ast"
 	"monkey/lexer"
 	"testing"
@@ -156,6 +157,65 @@ func TestNumberLiteralExpression(t *testing.T) {
 	if numberLiteral.TokenLiteral() != "5" {
 		t.Errorf("numberLiteral.TokenLiteral() expected : %s, but was actual : %s", "5", numberLiteral.TokenLiteral())
 	}
+}
+
+func TestParsingPrefixExpressions(t *testing.T) {
+	prefixTests := []struct {
+		input        string
+		operator     string
+		integerValue int64
+	}{
+		{"!5;", "!", 5},
+		{"-15;", "-", 15},
+	}
+
+	for _, tt := range prefixTests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+
+		checkParserErrors(t, p)
+		checkProgramLength(t, 1, program)
+
+		statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Errorf("statement expected : *ast.ExpressionStatement. but was actual : %T", program.Statements[0])
+		}
+
+		expression := statement.Expression.(*ast.PrefixExpression)
+		if !ok {
+			t.Errorf("expression expected : *ast.PrefixExpression. but was actual : %T", statement.Expression)
+		}
+
+		if expression.Operator != tt.operator {
+			t.Errorf("expression.Operator expected : %s, but was actual : %s", tt.operator, expression.Operator)
+		}
+
+		if !testNumberLiteral(t, expression.Right, tt.integerValue) {
+			return
+		}
+	}
+}
+
+func testNumberLiteral(t *testing.T, expression ast.Expression, value int64) bool {
+	numberLiteral, ok := expression.(*ast.NumberLiteral)
+
+	if !ok {
+		t.Errorf("expression expected : ast.NumberLiteral, but was actual : %T", numberLiteral)
+		return false
+	}
+
+	if numberLiteral.Value != value {
+		t.Errorf("numberLiteral.Value expected : %d, but was actual : %d", value, numberLiteral.Value)
+		return false
+	}
+
+	if numberLiteral.TokenLiteral() != fmt.Sprintf("%d", value) {
+		t.Errorf("numberLiteral.TokenLiteral() expected : %s, but was actual : %s", fmt.Sprintf("%d", value), numberLiteral.TokenLiteral())
+		return false
+	}
+
+	return true
 }
 
 func checkParserErrors(t *testing.T, p *Parser) {
