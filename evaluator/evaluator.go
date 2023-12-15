@@ -12,14 +12,14 @@ var (
 	NULL  = &object.Null{}
 )
 
-func Evaluate(node ast.Node) object.Object {
+func Evaluate(node ast.Node, environment *object.Environment) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evaluateProgram(node.Statements)
+		return evaluateProgram(node.Statements, environment)
 	case *ast.ExpressionStatement:
-		return Evaluate(node.Expression)
+		return Evaluate(node.Expression, environment)
 	case *ast.PrefixExpression:
-		right := Evaluate(node.Right)
+		right := Evaluate(node.Right, environment)
 		if isError(right) {
 			return right
 		}
@@ -29,8 +29,8 @@ func Evaluate(node ast.Node) object.Object {
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
 	case *ast.InfixExpression:
-		left := Evaluate(node.Left)
-		right := Evaluate(node.Right)
+		left := Evaluate(node.Left, environment)
+		right := Evaluate(node.Right, environment)
 
 		if isError(left) {
 			return left
@@ -39,21 +39,29 @@ func Evaluate(node ast.Node) object.Object {
 			return right
 		}
 
-		return evaluateInfixExpression(node.Operator, Evaluate(node.Left), Evaluate(node.Right))
+		return evaluateInfixExpression(node.Operator, Evaluate(node.Left, environment), Evaluate(node.Right, environment))
 	case *ast.BlockStatement:
-		return evaluateBlockStatement(node)
+		return evaluateBlockStatement(node, environment)
 	case *ast.IfExpression:
-		condition := Evaluate(node.Condition)
+		condition := Evaluate(node.Condition, environment)
 		if isError(condition) {
 			return condition
 		}
-		return evaluateIfExpression(node)
+		return evaluateIfExpression(node, environment)
 	case *ast.ReturnStatement:
-		value := Evaluate(node.ReturnValue)
+		value := Evaluate(node.ReturnValue, environment)
 		if isError(value) {
 			return value
 		}
-		return &object.ReturnValue{Value: Evaluate(node.ReturnValue)}
+		return &object.ReturnValue{Value: Evaluate(node.ReturnValue, environment)}
+	case *ast.LetStatement:
+		value := Evaluate(node.Value, environment)
+		if isError(value) {
+			return value
+		}
+		environment.Set(node.Name.Value, value)
+	case *ast.Identifier:
+		return evaluateIdentifier(node, environment)
 	}
 	return nil
 }
@@ -65,13 +73,23 @@ func isError(o object.Object) bool {
 	return false
 }
 
-func evaluateIfExpression(expression *ast.IfExpression) object.Object {
-	condition := Evaluate(expression.Condition)
+func evaluateIdentifier(node *ast.Identifier, environment *object.Environment) object.Object {
+	value, ok := environment.Get(node.Value)
+
+	if !ok {
+		return newError("identifier not found : " + node.Value)
+	}
+
+	return value
+}
+
+func evaluateIfExpression(expression *ast.IfExpression, environment *object.Environment) object.Object {
+	condition := Evaluate(expression.Condition, environment)
 
 	if isTruthy(condition) {
-		return Evaluate(expression.Consequence)
+		return Evaluate(expression.Consequence, environment)
 	} else if expression.Alternative != nil {
-		return Evaluate(expression.Alternative)
+		return Evaluate(expression.Alternative, environment)
 	} else {
 		return NULL
 	}
@@ -170,11 +188,11 @@ func nativeBoolToBooleanObject(value bool) *object.Boolean {
 	return FALSE
 }
 
-func evaluateProgram(statements []ast.Statement) object.Object {
+func evaluateProgram(statements []ast.Statement, environment *object.Environment) object.Object {
 	var result object.Object
 
 	for _, statement := range statements {
-		result = Evaluate(statement)
+		result = Evaluate(statement, environment)
 
 		switch result := result.(type) {
 		case *object.ReturnValue:
@@ -187,11 +205,11 @@ func evaluateProgram(statements []ast.Statement) object.Object {
 	return result
 }
 
-func evaluateBlockStatement(block *ast.BlockStatement) object.Object {
+func evaluateBlockStatement(block *ast.BlockStatement, environment *object.Environment) object.Object {
 	var result object.Object
 
 	for _, statement := range block.Statements {
-		result = Evaluate(statement)
+		result = Evaluate(statement, environment)
 
 		if result != nil {
 			if result.Type() == object.RETURN_VALUE_OBJECT || result.Type() == object.ERROR_OBJECT {
