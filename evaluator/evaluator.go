@@ -14,15 +14,92 @@ var (
 func Evaluate(node ast.Node) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalStatements(node.Statements)
+		return evaluateStatements(node.Statements)
 	case *ast.ExpressionStatement:
 		return Evaluate(node.Expression)
+	case *ast.PrefixExpression:
+		return evaluatePrefixExpression(node.Operator, Evaluate(node.Right))
 	case *ast.NumberLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
+	case *ast.InfixExpression:
+		left := Evaluate(node.Left)
+		right := Evaluate(node.Right)
+		return evaluateInfixExpression(node.Operator, left, right)
 	}
 	return nil
+}
+
+func evaluateInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.INTEGER_OBJECT && right.Type() == object.INTEGER_OBJECT:
+		return evaluateIntegerInfixExpression(operator, left, right)
+	case operator == "==":
+		return nativeBoolToBooleanObject(left == right)
+	case operator == "!=":
+		return nativeBoolToBooleanObject(left != right)
+	default:
+		return NULL
+	}
+}
+
+func evaluateIntegerInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	leftValue := left.(*object.Integer).Value
+	rightValue := right.(*object.Integer).Value
+
+	switch operator {
+	case "+":
+		return &object.Integer{Value: leftValue + rightValue}
+	case "-":
+		return &object.Integer{Value: leftValue - rightValue}
+	case "*":
+		return &object.Integer{Value: leftValue * rightValue}
+	case "/":
+		return &object.Integer{Value: leftValue / rightValue}
+	case "<":
+		return nativeBoolToBooleanObject(leftValue < rightValue)
+	case ">":
+		return nativeBoolToBooleanObject(leftValue > rightValue)
+	case "==":
+		return nativeBoolToBooleanObject(leftValue == rightValue)
+	case "!=":
+		return nativeBoolToBooleanObject(leftValue != rightValue)
+	default:
+		return NULL
+	}
+}
+
+func evaluatePrefixExpression(operator string, right object.Object) object.Object {
+	switch operator {
+	case "!":
+		return evaluateBangOperatorExpression(right)
+	case "-":
+		return evaluateMinusPrefixOperatorExpression(right)
+	default:
+		return NULL
+	}
+}
+
+func evaluateMinusPrefixOperatorExpression(right object.Object) object.Object {
+	if right.Type() != object.INTEGER_OBJECT {
+		return NULL
+	}
+	value := right.(*object.Integer).Value
+	return &object.Integer{Value: -value}
+}
+
+func evaluateBangOperatorExpression(right object.Object) object.Object {
+	switch right {
+	case TRUE:
+		return FALSE
+	case FALSE:
+		return TRUE
+	case NULL:
+		return TRUE
+	default:
+		return FALSE
+	}
 }
 
 func nativeBoolToBooleanObject(value bool) *object.Boolean {
@@ -32,7 +109,7 @@ func nativeBoolToBooleanObject(value bool) *object.Boolean {
 	return FALSE
 }
 
-func evalStatements(statements []ast.Statement) object.Object {
+func evaluateStatements(statements []ast.Statement) object.Object {
 	var result object.Object
 
 	for _, statement := range statements {

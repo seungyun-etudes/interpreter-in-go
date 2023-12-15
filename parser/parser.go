@@ -142,7 +142,7 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
-	
+
 	return statement
 }
 
@@ -186,7 +186,7 @@ func (p *Parser) parseIdentifier() ast.Expression {
 func (p *Parser) parseNumberLiteral() ast.Expression {
 	numberLiteral := &ast.NumberLiteral{Token: p.currentToken}
 
-	value, err := strconv.ParseInt(p.currentToken.Literal, 0, 64)
+	value, err := strconv.ParseInt(p.currentToken.Literal, 10, 64)
 	if err != nil {
 		msg := fmt.Sprintf("could not parse %q as number", p.currentToken.Literal)
 		p.errors = append(p.errors, msg)
