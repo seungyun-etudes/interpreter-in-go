@@ -284,6 +284,9 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		{"2 / (5 + 5)", "(2 / (5 + 5))"},
 		{"-(5 + 5)", "(-(5 + 5))"},
 		{"!(true == true)", "(!(true == true))"},
+		{"a + add(b * c) + d", "((a + add((b * c))) + d)"},
+		{"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"},
+		{"add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"},
 	}
 
 	for _, tt := range tests {
@@ -396,11 +399,83 @@ func TestIfElseExpression(t *testing.T) {
 	}
 }
 
+func TestFunctionLiteralParsing(t *testing.T) {
+	input := `function(x, y) { x + y; }`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	checkParserErrors(t, p)
+	checkProgramLength(t, 1, program)
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("program.Statements[0] expected : ast.ExpressionStatement, but was actual : %T", program.Statements[0])
+	}
+
+	function, ok := statement.Expression.(*ast.FunctionLiteral)
+	if !ok {
+		t.Errorf("function expected ast.FunctionLiteral: ast.s, but was actual : %T", statement.Expression)
+	}
+
+	if len(function.Parameters) != 2 {
+		t.Errorf("function.Parameters len expected : 1, but was actual : %d", len(function.Parameters))
+	}
+
+	testLiteralExpression(t, function.Parameters[0], "x")
+	testLiteralExpression(t, function.Parameters[1], "y")
+
+	if len(function.Body.Statements) != 1 {
+		t.Errorf("function.Body.Statements len expected : 1, but was actual : %d", len(function.Body.Statements))
+	}
+
+	bodyStatement, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("function.Body.Statements[0] expected : ast.ExpressionStatement, but was actual : %T", function.Body.Statements[0])
+	}
+
+	testInfixExpression(t, bodyStatement.Expression, "x", "+", "y")
+}
+
+func TestCallExpressionParsing(t *testing.T) {
+	input := "add(1, 2 * 3, 4 + 5)"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	checkParserErrors(t, p)
+	checkProgramLength(t, 1, program)
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Errorf("program.Statements[0] expected : ast.ExpressionStatement, but was actual : %T", program.Statements[0])
+	}
+
+	call, ok := statement.Expression.(*ast.CallExpression)
+	if !ok {
+		t.Errorf("call expected : ast.CallExpression, but was actual : %T", statement.Expression)
+	}
+
+	if !testIdentifier(t, call.Function, "add") {
+		return
+	}
+
+	if len(call.Arguments) != 3 {
+		t.Errorf("call.Arguments len expected : 1, but was actual : %d", len(call.Arguments))
+	}
+
+	testLiteralExpression(t, call.Arguments[0], 1)
+	testInfixExpression(t, call.Arguments[1], 2, "*", 3)
+	testInfixExpression(t, call.Arguments[2], 4, "+", 5)
+}
+
 func testNumberLiteral(t *testing.T, expression ast.Expression, value int64) bool {
 	numberLiteral, ok := expression.(*ast.NumberLiteral)
 
 	if !ok {
-		t.Errorf("expression expected : ast.NumberLiteral, but was actual : %T", numberLiteral)
+		t.Errorf("expression expected : ast.NumberLiteral, but was actual : %T", expression)
 		return false
 	}
 
