@@ -27,8 +27,37 @@ func Evaluate(node ast.Node) object.Object {
 		left := Evaluate(node.Left)
 		right := Evaluate(node.Right)
 		return evaluateInfixExpression(node.Operator, left, right)
+	case *ast.BlockStatement:
+		return evaluateStatements(node.Statements)
+	case *ast.IfExpression:
+		return evaluateIfExpression(node)
 	}
 	return nil
+}
+
+func evaluateIfExpression(expression *ast.IfExpression) object.Object {
+	condition := Evaluate(expression.Condition)
+
+	if isTruthy(condition) {
+		return Evaluate(expression.Consequence)
+	} else if expression.Alternative != nil {
+		return Evaluate(expression.Alternative)
+	} else {
+		return NULL
+	}
+}
+
+func isTruthy(o object.Object) bool {
+	switch o {
+	case NULL:
+		return false
+	case TRUE:
+		return true
+	case FALSE:
+		return false
+	default:
+		return true
+	}
 }
 
 func evaluateInfixExpression(operator string, left object.Object, right object.Object) object.Object {
