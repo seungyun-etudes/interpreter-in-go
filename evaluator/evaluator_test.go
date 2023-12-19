@@ -218,3 +218,59 @@ func TestEvaluateLetStatements(t *testing.T) {
 		testIntegerObject(t, testEvaluate(tt.input), tt.expected)
 	}
 }
+
+func TestEvaluateFunctionObject(t *testing.T) {
+	input := "function(x) { x + 2; }"
+
+	evaluated := testEvaluate(input)
+	function, ok := evaluated.(*object.Function)
+
+	if !ok {
+		t.Fatalf("evaluated expected : object.Function, but was actual %T", evaluated)
+	}
+
+	if len(function.Parameters) != 1 {
+		t.Fatalf("parameter len expected : 1, but was actual %d", len(function.Parameters))
+	}
+
+	if function.Parameters[0].String() != "x" {
+		t.Fatalf("parameter expected : x, but was actual %s", function.Parameters[0].String())
+	}
+
+	expectedBody := "(x + 2)"
+
+	if function.Body.String() != expectedBody {
+		t.Fatalf("body expected : %s, but was actual %s", expectedBody, function.Body.String())
+	}
+}
+
+func TestFunctionApplication(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"let identity = function(x) { x; } identity(5);", 5},
+		{"let identity = function(x) { return x; } identity(5);", 5},
+		{"let double = function(x) { x * 2; } double(5);", 10},
+		{"let add = function(x, y) { x + y; } add(5, 5);", 10},
+		{"let add = function(x, y) { x + y; } add(5 + 5, add(5, 5));", 20},
+		{"function(x) { x; }(5)", 5},
+	}
+
+	for _, tt := range tests {
+		testIntegerObject(t, testEvaluate(tt.input), tt.expected)
+	}
+}
+
+func TestEvaluateClosure(t *testing.T) {
+	input := `
+let newAdder = function(x) {
+	function(y) {x + y;}
+};
+
+let addTwo = newAdder(2);
+addTwo(5);
+`
+
+	testIntegerObject(t, testEvaluate(input), 7)
+}

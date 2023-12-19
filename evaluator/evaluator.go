@@ -62,8 +62,62 @@ func Evaluate(node ast.Node, environment *object.Environment) object.Object {
 		environment.Set(node.Name.Value, value)
 	case *ast.Identifier:
 		return evaluateIdentifier(node, environment)
+	case *ast.FunctionLiteral:
+		return &object.Function{Parameters: node.Parameters, Environment: environment, Body: node.Body}
+	case *ast.CallExpression:
+		function := Evaluate(node.Function, environment)
+		if isError(function) {
+			return function
+		}
+		args := evaluateExpressions(node.Arguments, environment)
+		if len(args) == 1 && isError(args[0]) {
+			return args[0]
+		}
+		return applyFunction(function, args)
 	}
+
 	return nil
+}
+
+func applyFunction(f object.Object, args []object.Object) object.Object {
+	function, ok := f.(*object.Function)
+	if !ok {
+		return newError("not a function : %s", f.Type())
+	}
+	extendedEnvironment := extendFunctionEnvironment(function, args)
+	evaluated := Evaluate(function.Body, extendedEnvironment)
+	return unwrapReturnValue(evaluated)
+}
+
+func unwrapReturnValue(o object.Object) object.Object {
+	if returnValue, ok := o.(*object.ReturnValue); ok {
+		return returnValue.Value
+	}
+	return o
+}
+
+func extendFunctionEnvironment(function *object.Function, args []object.Object) *object.Environment {
+	environment := object.NewEnclosedEnvironment(function.Environment)
+
+	for i, param := range function.Parameters {
+		environment.Set(param.Value, args[i])
+	}
+
+	return environment
+}
+
+func evaluateExpressions(expressions []ast.Expression, environment *object.Environment) []object.Object {
+	var result []object.Object
+
+	for _, e := range expressions {
+		evaluated := Evaluate(e, environment)
+		if isError(evaluated) {
+			return []object.Object{evaluated}
+		}
+		result = append(result, evaluated)
+	}
+
+	return result
 }
 
 func isError(o object.Object) bool {

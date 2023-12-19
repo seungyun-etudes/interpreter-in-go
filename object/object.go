@@ -1,6 +1,11 @@
 package object
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"monkey/ast"
+	"strings"
+)
 
 type Type string
 
@@ -10,6 +15,7 @@ const (
 	NULL_OBJECT         = "NULL"
 	RETURN_VALUE_OBJECT = "RETURN_VALUE"
 	ERROR_OBJECT        = "ERROR"
+	FUNCTION_OBJECT     = "FUNCTION"
 )
 
 type Object interface {
@@ -73,4 +79,32 @@ func (e *Error) Type() Type {
 
 func (e *Error) Inspect() string {
 	return "ERROR :" + e.Message
+}
+
+type Function struct {
+	Parameters  []*ast.Identifier
+	Body        *ast.BlockStatement
+	Environment *Environment
+}
+
+func (f *Function) Type() Type {
+	return FUNCTION_OBJECT
+}
+
+func (f *Function) Inspect() string {
+	var out bytes.Buffer
+	var params []string
+
+	for _, p := range f.Parameters {
+		params = append(params, p.String())
+	}
+
+	out.WriteString("function")
+	out.WriteString("(")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(") {\n")
+	out.WriteString(f.Body.String())
+	out.WriteString("\n}")
+
+	return out.String()
 }
