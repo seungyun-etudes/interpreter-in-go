@@ -471,6 +471,27 @@ func TestCallExpressionParsing(t *testing.T) {
 	testInfixExpression(t, call.Arguments[2], 4, "+", 5)
 }
 
+func TestStringLiteralExpression(t *testing.T) {
+	input := `"hello world!";`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	checkParserErrors(t, p)
+	checkProgramLength(t, 1, program)
+
+	statement := program.Statements[0].(*ast.ExpressionStatement)
+	literal, ok := statement.Expression.(*ast.StringLiteral)
+	if !ok {
+		t.Errorf("statement.Expression expected : ast.StringLiteral, but was actual : %T", statement.Expression)
+	}
+
+	if literal.Value != "hello world!" {
+		t.Errorf("literal.Value expected: hello, world!, but was actual : %s", literal.Value)
+	}
+}
+
 func testNumberLiteral(t *testing.T, expression ast.Expression, value int64) bool {
 	numberLiteral, ok := expression.(*ast.NumberLiteral)
 

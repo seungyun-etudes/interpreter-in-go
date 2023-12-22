@@ -27,6 +27,8 @@ func TestNextToken(t *testing.T) {
 
 	10 == 10
 	10 != 9
+	"foobar"
+	"foo bar"
 `
 
 	expectedTokens := []token.Token{
@@ -99,6 +101,8 @@ func TestNextToken(t *testing.T) {
 		{token.NUMBER, "10"},
 		{token.NOT_EQUAL, "!="},
 		{token.NUMBER, "9"},
+		{token.STRING, "foobar"},
+		{token.STRING, "foo bar"},
 		{token.EOF, ""},
 	}
 

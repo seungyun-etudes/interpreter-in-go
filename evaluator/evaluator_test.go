@@ -274,3 +274,19 @@ addTwo(5);
 
 	testIntegerObject(t, testEvaluate(input), 7)
 }
+
+func TestEvaluateStringLiteral(t *testing.T) {
+	input := `"Hello World!"`
+
+	evaluated := testEvaluate(input)
+
+	str, ok := evaluated.(*object.String)
+
+	if !ok {
+		t.Errorf("evaluated expected : object.String, but was actual : %T", evaluated)
+	}
+
+	if str.Value != "Hello World!" {
+		t.Errorf("str.Value expected: Hello, World!, but was actual : %s", str.Value)
+	}
+}

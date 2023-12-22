@@ -63,11 +63,14 @@ func (l *Lexer) NextToken() token.Token {
 		searched = token.New(token.LESS, string(l.char))
 	case '>':
 		searched = token.New(token.GREATER, string(l.char))
+	case '"':
+		searched = token.New(token.STRING, l.readString())
 	case 0:
 		searched = token.New(token.EOF, "")
 	default:
 		if isLetter(l.char) {
-			s := l.readString()
+
+			s := l.readIdentifier()
 			return token.New(token.FindStringType(s), s)
 		} else if isDigit(l.char) {
 			return token.New(token.NUMBER, l.readNumber())
@@ -92,10 +95,22 @@ func (l *Lexer) readChar() {
 }
 
 func (l *Lexer) readString() string {
+	start := l.current + 1
+	for {
+		l.readChar()
+		if l.char == '"' || l.char == 0 {
+			break
+		}
+	}
+	return l.input[start:l.current]
+}
+
+func (l *Lexer) readIdentifier() string {
 	start := l.current
 	for isLetter(l.char) || isDigit(l.char) {
 		l.readChar()
 	}
+
 	return l.input[start:l.current]
 }
 
