@@ -26,6 +26,8 @@ const (
 	RPAREN    = ")"
 	LBRACE    = "{"
 	RBRACE    = "}"
+	LBRACKET  = "["
+	RBRACKET  = "]"
 	EQUAL     = "=="
 	NOT_EQUAL = "!="
 	FUNCTION  = "FUNCTION"

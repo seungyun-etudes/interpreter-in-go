@@ -76,8 +76,25 @@ func Evaluate(node ast.Node, environment *object.Environment) object.Object {
 		return applyFunction(function, args)
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
-	}
+	case *ast.ArrayLiteral:
+		elements := evaluateExpressions(node.Elements, environment)
+		if len(elements) == 1 && isError(elements[0]) {
+			return elements[0]
+		}
+		return &object.Array{Elements: elements}
+	case *ast.IndexExpression:
+		left := Evaluate(node.Left, environment)
+		if isError(left) {
+			return left
+		}
 
+		index := Evaluate(node.Index, environment)
+		if isError(index) {
+			return index
+		}
+
+		return evaluateIndexExpression(left, index)
+	}
 	return nil
 }
 
@@ -290,6 +307,27 @@ func evaluateBlockStatement(block *ast.BlockStatement, environment *object.Envir
 	}
 
 	return result
+}
+
+func evaluateIndexExpression(left object.Object, index object.Object) object.Object {
+	switch {
+	case left.Type() == object.ARRAY_OBJECT && index.Type() == object.INTEGER_OBJECT:
+		return evaluateArrayIndexExpression(left, index)
+	default:
+		return newError("index opertor not suported : %s", left.Type())
+	}
+}
+
+func evaluateArrayIndexExpression(array object.Object, index object.Object) object.Object {
+	arrayObject := array.(*object.Array)
+
+	i := index.(*object.Integer).Value
+	max := int64(len(arrayObject.Elements) - 1)
+
+	if i < 0 || i > max {
+		return NULL
+	}
+	return arrayObject.Elements[i]
 }
 
 func newError(format string, a ...interface{}) *object.Error {

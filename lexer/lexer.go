@@ -21,6 +21,10 @@ func (l *Lexer) NextToken() token.Token {
 	l.skipWhitespace()
 
 	switch l.char {
+	case '[':
+		searched = token.New(token.LBRACKET, string(l.char))
+	case ']':
+		searched = token.New(token.RBRACKET, string(l.char))
 	case '=':
 		if l.peekChar() == '=' {
 			ch := l.char
