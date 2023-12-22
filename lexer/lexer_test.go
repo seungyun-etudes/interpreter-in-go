@@ -10,7 +10,7 @@ func TestNextToken(t *testing.T) {
 	let five = 5
 	let ten = 10
 
-	let add = function(x, y) {
+	let add = fn(x, y) {
 		return x + y;
 	}
 
@@ -43,7 +43,7 @@ func TestNextToken(t *testing.T) {
 		{token.LET, "let"},
 		{token.ID, "add"},
 		{token.ASSIGN, "="},
-		{token.FUNCTION, "function"},
+		{token.FUNCTION, "fn"},
 		{token.LPAREN, "("},
 		{token.ID, "x"},
 		{token.COMMA, ","},

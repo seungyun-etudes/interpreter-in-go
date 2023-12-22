@@ -39,13 +39,13 @@ const (
 )
 
 var keywords = map[string]Type{
-	"function": FUNCTION,
-	"let":      LET,
-	"return":   RETURN,
-	"true":     TRUE,
-	"false":    FALSE,
-	"if":       IF,
-	"else":     ELSE,
+	"fn":     FUNCTION,
+	"let":    LET,
+	"return": RETURN,
+	"true":   TRUE,
+	"false":  FALSE,
+	"if":     IF,
+	"else":   ELSE,
 }
 
 func New(tokenType Type, literal string) Token {
