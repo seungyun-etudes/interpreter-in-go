@@ -82,13 +82,16 @@ func Evaluate(node ast.Node, environment *object.Environment) object.Object {
 }
 
 func applyFunction(f object.Object, args []object.Object) object.Object {
-	function, ok := f.(*object.Function)
-	if !ok {
+	switch function := f.(type) {
+	case *object.Function:
+		extendedEnvironment := extendFunctionEnvironment(function, args)
+		evaluated := Evaluate(function.Body, extendedEnvironment)
+		return unwrapReturnValue(evaluated)
+	case *object.Builtin:
+		return function.Function(args...)
+	default:
 		return newError("not a function : %s", f.Type())
 	}
-	extendedEnvironment := extendFunctionEnvironment(function, args)
-	evaluated := Evaluate(function.Body, extendedEnvironment)
-	return unwrapReturnValue(evaluated)
 }
 
 func unwrapReturnValue(o object.Object) object.Object {
@@ -130,13 +133,15 @@ func isError(o object.Object) bool {
 }
 
 func evaluateIdentifier(node *ast.Identifier, environment *object.Environment) object.Object {
-	value, ok := environment.Get(node.Value)
-
-	if !ok {
-		return newError("identifier not found : " + node.Value)
+	if value, ok := environment.Get(node.Value); ok {
+		return value
 	}
 
-	return value
+	if value, ok := builtins[node.Value]; ok {
+		return value
+	}
+
+	return newError("identifier not found : " + node.Value)
 }
 
 func evaluateIfExpression(expression *ast.IfExpression, environment *object.Environment) object.Object {

@@ -306,3 +306,36 @@ func TestStringConcatenation(t *testing.T) {
 		t.Errorf("str.Value expected: Hello, World!, but was actual : %s", str.Value)
 	}
 }
+
+func TestBuiltinFunctions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`len("")`, 0},
+		{`len("four")`, 4},
+		{`len("hello world")`, 11},
+		{`len(1)`, "argument to `len` not supported, got INTEGER"},
+		{`len("a", "b")`, "wrong number of arguments. got=2, want=1"},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEvaluate(tt.input)
+
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case string:
+			errorObject, ok := evaluated.(*object.Error)
+
+			if !ok {
+				t.Errorf("evaluated expected : object.Error, but was actual : %T", evaluated)
+				continue
+			}
+
+			if errorObject.Message != expected {
+				t.Errorf("errorObject.Message expected : %s, but was actual : %s", expected, errorObject.Message)
+			}
+		}
+	}
+}
